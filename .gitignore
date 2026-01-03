@@ -1,8 +1,4 @@
-
-# IntelliJ project files
-.idea/
-*.iml
-
-# etc.
-.DS_Store
-
+venv/
+__pycache__/
+*.pyc
+.env
