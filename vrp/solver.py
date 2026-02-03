@@ -88,37 +88,59 @@ def greedy_route(warehouse, customers):
         tour.append(nxt)
         remaining.remove(nxt)
 
+    # Return to warehouse
+    tour.append(0)
+    
     ordered = [points[i] for i in tour]
-    dist = sum(haversine(ordered[i-1], ordered[i]) for i in range(len(ordered)))
+    # Sum distances between sequential points in the route
+    dist = sum(haversine(ordered[i], ordered[i+1]) for i in range(len(ordered) - 1))
     return ordered, dist
 
 # =========================
 # CLEAN VISUALIZATION
 # =========================
-def plot_route(vehicle_id, route):
-    xs = [p.x for p in route]
-    ys = [p.y for p in route]
+def plot_all_routes(warehouse, vehicle_routes):
+    """
+    Plots all vehicle routes on a single map with different colors.
+    """
+    plt.figure(figsize=(12, 8))
+    
+    
+    
+    # Plot warehouse
+    plt.scatter(warehouse.x, warehouse.y, s=250, c="red", marker="s", 
+                edgecolor="black", zorder=5, label="Warehouse")
+    plt.text(warehouse.x, warehouse.y, "  Warehouse", fontsize=12, 
+             fontweight='bold', va="center")
 
-    plt.figure(figsize=(10,3))
-    plt.plot(xs, ys, "-o", linewidth=2)
+    for i, (v_idx, route) in enumerate(vehicle_routes):
+        # Pick a distinct color for each vehicle
+        color = plt.cm.tab10(i % 10)
+        xs = [p.x for p in route]
+        ys = [p.y for p in route]
+        
+        # Plot the route line
+        plt.plot(xs, ys, "-", color=color, linewidth=2.5, alpha=0.8, 
+                 label=f"Vehicle {v_idx}")
+        
+        # Plot customer points and numbers
+        for j, p in enumerate(route):
+            if j == 0: continue # Skip warehouse (already plotted)
+            
+            plt.scatter(p.x, p.y, s=100, color=color, edgecolor="black", zorder=4)
+            plt.text(p.x, p.y, f" {j}", fontsize=9, fontweight='bold',
+                     ha="left", va="bottom")
 
-    # Warehouse
-    plt.scatter(xs[0], ys[0], s=200, c="red", marker="s", label="Warehouse")
-
-    # Customer numbers
-    for i in range(1, len(route)):
-        plt.text(xs[i], ys[i], str(i), fontsize=10,
-                 ha="center", va="bottom")
-
-    plt.title(f"Vehicle {vehicle_id} Route")
-    plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
-
-    # 🔥 KEY LINE (no distortion)
-    plt.gca().set_aspect("equal", adjustable="box")
-
-    plt.grid(True)
-    plt.legend()
+    plt.title("Optimized Vehicle Routing Plan", fontsize=16, pad=20)
+    plt.xlabel("Longitude", fontsize=12)
+    plt.ylabel("Latitude", fontsize=12)
+    
+    # Set aspect ratio to equal to avoid geographical distortion
+    plt.gca().set_aspect("equal", adjustable="datalim")
+    
+    plt.grid(True, linestyle="--", alpha=0.6)
+    plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
+    plt.tight_layout()
     plt.show()
 
 # =========================
@@ -129,6 +151,7 @@ def solve(csv_file, show_plot=True):
     vehicles = cluster(customers, NUM_VEHICLES)
 
     total_dist = 0
+    all_routes = []
 
     for v in vehicles:
         if not v.customers:
@@ -136,20 +159,32 @@ def solve(csv_file, show_plot=True):
 
         route, dist = greedy_route(warehouse, v.customers)
         total_dist += dist
+        all_routes.append((v.index + 1, route))
 
         print(f"\nVehicle {v.index + 1}")
         print("Route:", " -> ".join(str(p.index) for p in route))
         print(f"Distance: {dist:.2f} km")
 
-        if show_plot:
-            plot_route(v.index + 1, route)
-
     baseline = sum(haversine(warehouse, c)*2 for c in customers)
+    savings = baseline - total_dist
+    savings_pct = (savings / baseline * 100) if baseline > 0 else 0
 
-    print("\nSUMMARY")
-    print(f"Baseline distance : {baseline:.2f} km")
-    print(f"Optimized distance: {total_dist:.2f} km")
-    print(f"Saved distance   : {baseline - total_dist:.2f} km")
+    print("\n" + "="*40)
+    print("      DELIVERY OPTIMIZATION SUMMARY")
+    print("="*40)
+    print(f"Total Vehicles used    : {len(all_routes)}")
+    print(f"Total Customers served : {len(customers)}")
+    print("-" * 40)
+    print(f"Actual (Unoptimized)   : {baseline:10.2f} km")
+    print(f"Optimized Distance     : {total_dist:10.2f} km")
+    print("-" * 40)
+    print(f"DISTANCE SAVED         : {savings:10.2f} km")
+    print(f"EFFICIENCY IMPROVEMENT : {savings_pct:10.2f} %")
+    print("="*40)
+
+    if show_plot and all_routes:
+        print("\nOpening visualization... (Close the window to exit)")
+        plot_all_routes(warehouse, all_routes)
 
 # =========================
 # RUN
