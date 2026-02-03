@@ -34,41 +34,80 @@ This project calculates distances between locations using the Haversine formula 
 ---
 
 ## 📂 Project Structure
+```
 vehicle-routing-optimization/
 │── vrp/
-│ ├── solver.py
-│ ├── locations.csv
+│   ├── solver.py
+│   ├── locations.csv
 │── README.md
-
-
+```
 
 ---
 
-## ▶️ How to Run
+## ▶️ Installation & Usage 🔧
 
-1. Clone the repository
+### Prerequisites
+- **Python 3.10+**
+- **Git**
+- (Optional) **Docker** for containerized runs
+
+### 1) Clone the repository
 ```bash
 git clone https://github.com/kabi-60/vehicle-routing-optimization.git
 cd vehicle-routing-optimization
-Create and activate virtual environment
+```
 
-bash
-Copy code
+### 2) Create & activate a virtual environment
+- macOS / Linux
+```bash
 python -m venv venv
-venv\Scripts\activate
-Install dependencies
+source venv/bin/activate
+```
 
-bash
-Copy code
+- Windows (PowerShell)
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 3) Install dependencies
+If a `requirements.txt` file is present:
+```bash
 pip install -r requirements.txt
-Run the program
+```
+If not, install the core packages:
+```bash
+pip install numpy pandas scikit-learn matplotlib
+```
 
-bash
-Copy code
+### 4) Run the solver
+```bash
 python vrp/solver.py vrp/locations.csv true
-📊 Output
-The program clusters delivery locations and generates optimized vehicle routes based on distance minimization.
+```
+- **Arguments:**
+  - `vrp/locations.csv` — path to the CSV containing locations (latitude, longitude, ...)
+  - `true|false` — example flag (e.g., enable verbose output or plotting)
 
-👨‍💻 Author
-Kabi Krishna
-Python | Optimization | Problem Solving
+### Optional: Docker (quick run)
+```bash
+# build
+docker build -t vrp .
+# run (mount repo and run solver)
+docker run --rm -v "$(pwd)/vrp:/app/vrp" vrp python vrp/solver.py vrp/locations.csv true
+```
+
+### Troubleshooting ⚠️
+- PowerShell activation blocked? Run: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned -Force` (requires admin privileges)
+- Missing packages? Re-run `pip install -r requirements.txt` or install packages manually
+
+---
+
+### Contributing 🤝
+- Fork the repository, create a feature branch, add tests, and open a pull request.
+
+---
+
+### Author & License
+**Author:** Kabi Krishna  
+**License:** MIT (if applicable)
+
